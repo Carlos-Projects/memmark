@@ -97,16 +97,23 @@ class PoisoningDetector:
                 findings.append(
                     Finding(
                         finding_type=FindingType.POISONING_DETECTED,
-                        severity=Severity.CRITICAL if injection_score > 0.9 else Severity.HIGH,
+                        severity=Severity.CRITICAL
+                        if injection_score > 0.9
+                        else Severity.HIGH,
                         description=f"Instruction injection detected (confidence: {injection_score:.2%})",
                         memory_id=memory_id,
-                        evidence={"injection_score": injection_score, "content_preview": content[:100]},
+                        evidence={
+                            "injection_score": injection_score,
+                            "content_preview": content[:50],
+                        },
                         remediation="Remove or quarantine the suspicious memory entry",
                     ),
                 )
 
             # Check for manipulation attempts
-            manipulation_score = self._score_patterns(content, self.manipulation_patterns)
+            manipulation_score = self._score_patterns(
+                content, self.manipulation_patterns
+            )
             if manipulation_score >= self.manipulation_threshold:
                 findings.append(
                     Finding(
@@ -114,7 +121,10 @@ class PoisoningDetector:
                         severity=Severity.HIGH,
                         description=f"Behavioral manipulation attempt (confidence: {manipulation_score:.2%})",
                         memory_id=memory_id,
-                        evidence={"manipulation_score": manipulation_score, "content_preview": content[:100]},
+                        evidence={
+                            "manipulation_score": manipulation_score,
+                            "content_preview": content[:50],
+                        },
                         remediation="Review and remove manipulative memory content",
                     ),
                 )

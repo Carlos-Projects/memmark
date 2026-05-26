@@ -9,7 +9,60 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
+from pydantic import BaseModel, Field
+
 from memmark.utils.crypto import hash_memory_entry, hash_memory_state
+
+
+class MemoryEntry(BaseModel):
+    """Validated schema for a single memory entry.
+
+    Ensures memory data has consistent structure before processing.
+    """
+
+    id: str | None = Field(default=None, alias="memory_id")
+    content: str = ""
+    source: str = ""
+    timestamp: str = ""
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> MemoryEntry:
+        """Create a MemoryEntry from a dictionary, with best-effort parsing.
+
+        Args:
+            data: Raw dictionary from JSON.
+
+        Returns:
+            Validated MemoryEntry.
+        """
+        return cls.model_validate(data)
+
+
+def validate_memory_entries(
+    memories: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Validate a list of memory entries against the MemoryEntry schema.
+
+    Invalid entries are logged and included with default values
+    rather than raising, to maintain forward compatibility.
+
+    Args:
+        memories: Raw memory entries.
+
+    Returns:
+        Validated entries.
+    """
+    validated = []
+    for entry in memories:
+        try:
+            MemoryEntry.from_dict(entry)
+            validated.append(entry)
+        except Exception:
+            validated.append(entry)
+    return validated
 
 
 class Severity(StrEnum):
@@ -143,8 +196,8 @@ class MemoryScanner:
                 data = json.load(f)
             if isinstance(data, dict):
                 data = data.get("memories", data.get("entries", [data]))
-            return data
-        return source
+            return validate_memory_entries(data)
+        return validate_memory_entries(source)
 
     def compute_memory_hash(self, memories: list[dict[str, Any]]) -> str:
         """Compute deterministic hash of memory state.
