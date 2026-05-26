@@ -17,12 +17,17 @@ from memmark.watermark.injector import WatermarkInjector
 class WatermarkRobustnessTester:
     """Tests watermark robustness against memory transformations."""
 
-    def __init__(self, secret_key: str = "default-memmark-key") -> None:
+    def __init__(self, secret_key: str) -> None:
         """Initialize robustness tester.
 
         Args:
             secret_key: Secret key for watermark operations.
+
+        Raises:
+            ValueError: If secret_key is empty.
         """
+        if not secret_key:
+            raise ValueError("secret_key must not be empty")
         self.injector = WatermarkInjector(secret_key)
         self.detector = WatermarkDetector(secret_key)
 
@@ -61,7 +66,9 @@ class WatermarkRobustnessTester:
             results["transformations"][transform] = {
                 "valid_before": baseline_valid,
                 "valid_after": valid_after,
-                "retention_rate": valid_after / baseline_valid if baseline_valid > 0 else 0.0,
+                "retention_rate": valid_after / baseline_valid
+                if baseline_valid > 0
+                else 0.0,
             }
 
         return results

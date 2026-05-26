@@ -15,12 +15,18 @@ from memmark.watermark.injector import WatermarkInjector
 class WatermarkDetector:
     """Detects and verifies watermarks in agent memory entries."""
 
-    def __init__(self, secret_key: str = "default-memmark-key") -> None:
+    def __init__(self, secret_key: str) -> None:
         """Initialize the watermark detector.
 
         Args:
             secret_key: Secret key used for watermark verification.
+                       Must match the key used during injection.
+
+        Raises:
+            ValueError: If secret_key is empty.
         """
+        if not secret_key:
+            raise ValueError("secret_key must not be empty")
         self.secret_key = secret_key
         self.injector = WatermarkInjector(secret_key)
 
@@ -59,9 +65,20 @@ class WatermarkDetector:
                 "reason": "no_watermark_found",
             }
 
-        # Recompute expected signature
+        # Recompute expected signature using salt from stored signature
         canonical = self.injector._canonicalize(entry)
-        expected = hmac_sign(canonical, self.secret_key)
+
+        # Extract salt from stored signature (first 32 hex chars = 16 bytes)
+        if len(signature) >= 32:
+            try:
+                salt = bytes.fromhex(signature[:32])
+                expected = hmac_sign(canonical, self.secret_key, salt)
+            except (ValueError, IndexError):
+                # Fall back to saltless comparison for legacy signatures
+                expected = _legacy_hmac_sign(canonical, self.secret_key)
+        else:
+            # Legacy signatures without salt
+            expected = _legacy_hmac_sign(canonical, self.secret_key)
 
         is_valid = signature == expected
         confidence = 1.0 if is_valid else 0.0
@@ -100,3 +117,25 @@ class WatermarkDetector:
             "invalid_watermarks": total - valid_count,
             "provenance_confirmed": valid_count == total and total > 0,
         }
+
+
+def _legacy_hmac_sign(data: str, key: str) -> str:
+    """Legacy HMAC-SHA256 signing without salt (backward compatibility).
+
+    Used to verify watermarks created before the KDF upgrade.
+
+    Args:
+        data: Data to sign.
+        key: Secret key.
+
+    Returns:
+        Hex-encoded signature.
+    """
+    import hashlib
+    import hmac
+
+    return hmac.new(
+        key.encode("utf-8"),
+        data.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()

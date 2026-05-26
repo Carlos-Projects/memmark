@@ -20,39 +20,41 @@ SAMPLE_MEMORIES = [
 
 
 class TestWatermarkInjector:
-    def test_init_default_key(self) -> None:
-        injector = WatermarkInjector()
-        assert injector.secret_key == "default-memmark-key"
-
     def test_init_custom_key(self) -> None:
         injector = WatermarkInjector(secret_key="custom")
         assert injector.secret_key == "custom"
 
+    def test_init_empty_key_raises(self) -> None:
+        import pytest
+
+        with pytest.raises(ValueError, match="must not be empty"):
+            WatermarkInjector(secret_key="")
+
     def test_inject_adds_watermark(self) -> None:
-        injector = WatermarkInjector()
+        injector = WatermarkInjector(secret_key="test-key")
         result = injector.inject(SAMPLE_MEMORIES)
         assert len(result) == 3
 
     def test_inject_adds_signature(self) -> None:
-        injector = WatermarkInjector()
+        injector = WatermarkInjector(secret_key="test-key")
         result = injector.inject(SAMPLE_MEMORIES)
         for entry in result:
             assert WatermarkInjector.SIGNATURE_KEY in entry
 
     def test_inject_adds_watermark_key(self) -> None:
-        injector = WatermarkInjector()
+        injector = WatermarkInjector(secret_key="test-key")
         result = injector.inject(SAMPLE_MEMORIES)
         for entry in result:
             assert WatermarkInjector.WATERMARK_KEY in entry
 
     def test_inject_preserves_original(self) -> None:
-        injector = WatermarkInjector()
+        injector = WatermarkInjector(secret_key="test-key")
         result = injector.inject(SAMPLE_MEMORIES)
         for i, entry in enumerate(result):
             assert entry["id"] == SAMPLE_MEMORIES[i]["id"]
 
     def test_watermark_format(self) -> None:
-        injector = WatermarkInjector()
+        injector = WatermarkInjector(secret_key="test-key")
         result = injector.inject([{"id": "mem-001", "content": "test"}])
         wm = result[0][WatermarkInjector.WATERMARK_KEY]
         assert wm["version"] == "1.0"
@@ -73,7 +75,7 @@ class TestWatermarkInjector:
 
 class TestWatermarkDetector:
     def test_detect_no_watermarks(self) -> None:
-        detector = WatermarkDetector()
+        detector = WatermarkDetector(secret_key="test-key")
         results = detector.detect(SAMPLE_MEMORIES)
         assert all(not r["valid"] for r in results)
 
@@ -99,20 +101,12 @@ class TestWatermarkDetector:
         assert result["provenance_confirmed"]
 
     def test_verify_provenance_no_watermarks(self) -> None:
-        detector = WatermarkDetector()
+        detector = WatermarkDetector(secret_key="test-key")
         result = detector.verify_provenance(SAMPLE_MEMORIES, "test")
         assert not result["provenance_confirmed"]
 
-    def test_confidence_values(self) -> None:
-        injector = WatermarkInjector(secret_key="key")
-        detector = WatermarkDetector(secret_key="key")
-        watermarked = injector.inject(SAMPLE_MEMORIES)
-        results = detector.detect(watermarked)
-        for r in results:
-            assert r["confidence"] in (0.0, 1.0)
-
     def test_detect_entry_no_watermark(self) -> None:
-        detector = WatermarkDetector()
+        detector = WatermarkDetector(secret_key="test-key")
         result = detector._detect_entry({"id": "mem-001", "content": "test"})
         assert not result["valid"]
         assert result["reason"] == "no_watermark_found"

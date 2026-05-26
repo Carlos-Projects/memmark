@@ -58,7 +58,7 @@ class TestCli:
             json.dump(SAMPLE_MEMORY, f)
             path = f.name
         try:
-            result = runner.invoke(app, ["watermark", path])
+            result = runner.invoke(app, ["watermark", path, "--key", "test-key"])
             assert result.exit_code == 0
             assert "NOT FOUND" in result.stdout
         finally:

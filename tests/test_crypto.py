@@ -59,7 +59,8 @@ class TestHmac:
     def test_sign(self) -> None:
         sig = hmac_sign("data", "key")
         assert isinstance(sig, str)
-        assert len(sig) == 64
+        # 32 hex chars for salt + 64 hex chars for HMAC = 96
+        assert len(sig) == 96
 
     def test_verify_valid(self) -> None:
         sig = hmac_sign("data", "key")
@@ -73,8 +74,21 @@ class TestHmac:
         sig = hmac_sign("data1", "key")
         assert not hmac_verify("data2", "key", sig)
 
-    def test_sign_deterministic(self) -> None:
-        assert hmac_sign("test", "key") == hmac_sign("test", "key")
+    def test_verify_invalid_salt(self) -> None:
+        assert not hmac_verify("data", "key", "tooshort")
+
+    def test_sign_with_salt(self) -> None:
+        salt = b"\x00" * 16
+        sig = hmac_sign("data", "key", salt=salt)
+        assert isinstance(sig, str)
+        assert len(sig) == 96
+        # Salt portion should be 32 hex zeros
+        assert sig[:32] == "0" * 32
+
+    def test_verify_with_fixed_salt(self) -> None:
+        salt = b"\x01" * 16
+        sig = hmac_sign("data", "key", salt=salt)
+        assert hmac_verify("data", "key", sig)
 
 
 class TestMemoryHash:

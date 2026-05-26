@@ -97,7 +97,9 @@ def watermark(
     ] = "detect",
     key: Annotated[
         str | None,
-        typer.Option("--key", "-k", help="Watermark secret key"),
+        typer.Option(
+            "--key", "-k", help="Secret key for watermark operations (required)"
+        ),
     ] = None,
     output: Annotated[
         Path | None,
@@ -108,6 +110,10 @@ def watermark(
     from memmark.watermark.detector import WatermarkDetector
     from memmark.watermark.injector import WatermarkInjector
 
+    if not key:
+        console.print("[red]Error: --key is required for watermark operations[/red]")
+        raise typer.Exit(1)
+
     try:
         memories = _load_memories(memory_file)
     except (FileNotFoundError, json.JSONDecodeError) as e:
@@ -115,7 +121,7 @@ def watermark(
         raise typer.Exit(1)
 
     if action == "inject":
-        injector = WatermarkInjector(secret_key=key or "default-memmark-key")
+        injector = WatermarkInjector(secret_key=key)
         watermarked = injector.inject(memories)
         out_path = output or memory_file
         out_path.write_text(
@@ -123,11 +129,11 @@ def watermark(
         )
         console.print(f"[green]Watermark injected into {out_path}[/green]")
     elif action == "detect":
-        detector = WatermarkDetector(secret_key=key or "default-memmark-key")
+        detector = WatermarkDetector(secret_key=key)
         results = detector.detect(memories)
         _display_watermark_results(results)
     elif action == "verify":
-        detector = WatermarkDetector(secret_key=key or "default-memmark-key")
+        detector = WatermarkDetector(secret_key=key)
         results = detector.detect(memories)
         valid = all(r.get("valid", False) for r in results)
         if valid:

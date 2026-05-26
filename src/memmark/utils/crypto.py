@@ -3,6 +3,7 @@
 import hashlib
 import hmac
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -38,35 +39,75 @@ def sha256_file(file_path: str | Path) -> str:
     return h.hexdigest()
 
 
-def hmac_sign(data: str, key: str) -> str:
-    """Create HMAC-SHA256 signature.
+def derive_key(secret_key: str, salt: bytes | None = None) -> tuple[bytes, bytes]:
+    """Derive a strong HMAC key using PBKDF2-SHA256.
+
+    Args:
+        secret_key: User-provided secret key.
+        salt: Optional salt (auto-generated if None).
+
+    Returns:
+        Tuple of (derived_key, salt).
+    """
+    if salt is None:
+        salt = os.urandom(16)
+    derived = hashlib.pbkdf2_hmac(
+        "sha256",
+        secret_key.encode("utf-8"),
+        salt,
+        iterations=100000,
+        dklen=32,
+    )
+    return derived, salt
+
+
+def hmac_sign(data: str, key: str, salt: bytes | None = None) -> str:
+    """Create HMAC-SHA256 signature with key derivation.
+
+    Uses PBKDF2 key derivation to strengthen the secret key
+    before HMAC computation. The salt is embedded in the output
+    for verification.
 
     Args:
         data: Data to sign.
-        key: Secret key.
+        key: Secret key (will be derived via PBKDF2).
+        salt: Optional salt (auto-generated if None).
 
     Returns:
-        Hexadecimal signature string.
+        Hex-encoded signature string with embedded salt.
     """
-    return hmac.new(
-        key.encode("utf-8"),
+    derived_key, used_salt = derive_key(key, salt)
+    signature = hmac.new(
+        derived_key,
         data.encode("utf-8"),
         hashlib.sha256,
     ).hexdigest()
+    # Embed salt in output: first 32 hex chars = salt, rest = sig
+    return used_salt.hex() + signature
 
 
 def hmac_verify(data: str, key: str, signature: str) -> bool:
     """Verify HMAC-SHA256 signature.
 
+    Extracts the salt from the signature, re-derives the key,
+    and compares using constant-time comparison.
+
     Args:
         data: Original data.
         key: Secret key.
-        signature: Signature to verify.
+        signature: Signature to verify (includes embedded salt).
 
     Returns:
         True if signature is valid.
     """
-    expected = hmac_sign(data, key)
+    if len(signature) < 32:
+        return False
+    salt_hex = signature[:32]
+    try:
+        salt = bytes.fromhex(salt_hex)
+    except ValueError:
+        return False
+    expected = hmac_sign(data, key, salt)
     return hmac.compare_digest(expected, signature)
 
 

@@ -2,6 +2,10 @@
 
 Implements state-evolution attribution watermarking based on
 arXiv:2605.25073 (Zhang et al.) — MemMark.
+
+SECURITY NOTE: A secret_key MUST be provided. There is no default
+for security reasons — using a default key would make watermarks
+trivially forgeable.
 """
 
 from __future__ import annotations
@@ -23,12 +27,18 @@ class WatermarkInjector:
     WATERMARK_KEY = "_memmark_wm"
     SIGNATURE_KEY = "_memmark_sig"
 
-    def __init__(self, secret_key: str = "default-memmark-key") -> None:
+    def __init__(self, secret_key: str) -> None:
         """Initialize the watermark injector.
 
         Args:
             secret_key: Secret key for HMAC watermark generation.
+                       Must be a non-empty string unique to your deployment.
+
+        Raises:
+            ValueError: If secret_key is empty.
         """
+        if not secret_key:
+            raise ValueError("secret_key must not be empty")
         self.secret_key = secret_key
 
     def inject(self, memories: list[dict[str, Any]]) -> list[dict[str, Any]]:
