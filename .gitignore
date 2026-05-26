@@ -55,3 +55,4 @@ Thumbs.db
 *.manifest.json
 memmark-reports/
 mcpguard-policy.yaml
+opencode.json
