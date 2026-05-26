@@ -1,0 +1,88 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "memmark-agent"
+version = "0.1.0"
+description = "Memory integrity and watermarking toolkit for AI agent long-term memory systems"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [
+    { name = "Carlos Rocha", email = "carlos@syntho.dev" },
+]
+keywords = [
+    "ai-security",
+    "agent-memory",
+    "watermarking",
+    "memory-poisoning",
+    "integrity",
+    "provenance",
+    "llm-security",
+    "mcp-security",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "typer>=0.12.0",
+    "rich>=13.7.0",
+    "pydantic>=2.0.0",
+    "jinja2>=3.1.0",
+    "numpy>=1.26.0",
+    "pyyaml>=6.0",
+    "mcp-taxonomy>=0.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=5.0.0",
+    "ruff>=0.4.0",
+]
+
+[project.scripts]
+memmark = "memmark.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/memmark"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "SIM"]
+ignore = ["E501", "B904"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["memmark"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+addopts = "--cov=memmark --cov-report=term-missing --cov-report=xml"
+
+[tool.coverage.run]
+source = ["src/memmark"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]
+fail_under = 80
