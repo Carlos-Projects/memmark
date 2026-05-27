@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Carlos Rocha
+# Copyright (c) 2025 Carlos-Projects
 # SPDX-License-Identifier: MIT
 
 """Memory forensics for AI agent memory systems.
@@ -49,7 +49,7 @@ class MemoryForensics:
                 try:
                     if isinstance(ts, str):
                         timestamps.append(datetime.fromisoformat(ts))
-                    elif isinstance(ts, (int, float)):
+                    elif isinstance(ts, int | float):
                         timestamps.append(datetime.fromtimestamp(ts))
                 except (ValueError, OSError):
                     pass

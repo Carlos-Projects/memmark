@@ -12,7 +12,7 @@ We take the security of MemMark seriously. If you believe you have found a secur
 
 **Please do NOT report security vulnerabilities through public GitHub issues.**
 
-Instead, please report them via email to **carlos@syntho.dev** with the following information:
+Instead, please report them via email to **Carlos@AIAgentObservatory.org** with the following information:
 
 1. Description of the vulnerability
 2. Steps to reproduce

@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Carlos Rocha
+# Copyright (c) 2025 Carlos-Projects
 # SPDX-License-Identifier: MIT
 
 """MemMark — Memory integrity toolkit for AI agent long-term memory."""
@@ -84,5 +84,5 @@ __all__ = [
 ]
 
 __version__ = "0.1.0"
-__author__ = "Carlos Rocha"
-__email__ = "carlos@syntho.dev"
+__author__ = "Carlos-Projects"
+__email__ = "Carlos@AIAgentObservatory.org"

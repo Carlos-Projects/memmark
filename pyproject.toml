@@ -10,7 +10,7 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 authors = [
-    { name = "Carlos Rocha", email = "carlos@syntho.dev" },
+    { name = "Carlos-Projects", email = "Carlos@AIAgentObservatory.org" },
 ]
 keywords = [
     "ai-security",

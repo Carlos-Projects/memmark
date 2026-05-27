@@ -175,4 +175,4 @@ MIT — See [LICENSE](LICENSE).
 
 ## Author
 
-Carlos Rocha — [GitHub](https://github.com/Carlos-Projects)
+Carlos-Projects — [GitHub](https://github.com/Carlos-Projects)
