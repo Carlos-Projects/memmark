@@ -1,0 +1,59 @@
+site_name: MemMark
+site_description: Memory integrity and watermarking toolkit for AI agent long-term memory systems
+site_url: https://carlos-projects.github.io/memmark
+repo_url: https://github.com/Carlos-Projects/memmark
+repo_name: Carlos-Projects/memmark
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - User Guide:
+    - Watermarking: guide/watermarking.md
+    - Poisoning Detection: guide/poisoning.md
+    - Provenance: guide/provenance.md
+    - Integrity: guide/integrity.md
+    - Security Model: guide/security.md
+  - API Reference:
+    - Overview: api/index.md
+    - Scanner: api/scanner.md
+    - Watermark: api/watermark.md
+    - Poisoning: api/poisoning.md
+    - Provenance: api/provenance.md
+    - Integrity: api/integrity.md
+    - Crypto: api/crypto.md
+    - Policy: api/policy.md
+    - Reporters: api/reporters.md
+    - Taxonomy: api/taxonomy.md
+  - CLI Reference: guide/cli.md
+  - Changelog: changelog.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            show_source: true
+            show_root_heading: true
+            docstring_style: google
+            merge_init_into_class: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.details
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Carlos-Projects/memmark

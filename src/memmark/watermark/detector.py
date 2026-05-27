@@ -71,19 +71,23 @@ class WatermarkDetector:
         # Recompute expected signature using salt from stored signature
         canonical = self.injector._canonicalize(entry)
 
-        # Extract salt from stored signature (first 32 hex chars = 16 bytes)
-        if len(signature) >= 32:
+        # Detect signature format by length:
+        # 96 chars = new format (32 salt + 64 HMAC-SHA256)
+        # 64 chars = legacy format (HMAC-SHA256 without salt)
+        sig_len = len(signature)
+
+        if sig_len == 96:
             try:
                 salt = bytes.fromhex(signature[:32])
                 expected = hmac_sign(canonical, self.secret_key, salt)
             except (ValueError, IndexError):
-                # Fall back to saltless comparison for legacy signatures
-                expected = _legacy_hmac_sign(canonical, self.secret_key)
-        else:
-            # Legacy signatures without salt
+                expected = None
+        elif sig_len == 64:
             expected = _legacy_hmac_sign(canonical, self.secret_key)
+        else:
+            expected = None
 
-        is_valid = signature == expected
+        is_valid = expected is not None and signature == expected
         confidence = 1.0 if is_valid else 0.0
 
         return {

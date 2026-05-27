@@ -9,7 +9,7 @@ class TestPublicAPI:
         assert memmark.__version__ == "0.1.0"
 
     def test_all_defined(self) -> None:
-        assert len(memmark.__all__) == 30
+        assert len(memmark.__all__) == 33
 
     def test_import_all(self) -> None:
         for name in memmark.__all__:

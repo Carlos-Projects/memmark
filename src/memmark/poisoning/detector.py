@@ -12,9 +12,14 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, cast
 
+import yaml
+
 from memmark.scanner import Finding, FindingType, Severity
+
+DEFAULT_PATTERNS_PATH = Path(__file__).parent / "default_patterns.yaml"
 
 
 @dataclass
@@ -64,17 +69,45 @@ class PoisoningDetector:
         self,
         injection_threshold: float = 0.7,
         manipulation_threshold: float = 0.6,
+        config_path: str | Path | None = None,
     ) -> None:
         """Initialize poisoning detector.
 
         Args:
             injection_threshold: Confidence threshold for injection detection.
             manipulation_threshold: Confidence threshold for manipulation detection.
+            config_path: Optional path to YAML patterns config.
+                        If not provided, default patterns from
+                        :data:`INJECTION_PATTERNS` and
+                        :data:`MANIPULATION_PATTERNS` are used.
         """
-        self.injection_patterns = [re.compile(p) for p in self.INJECTION_PATTERNS]
-        self.manipulation_patterns = [re.compile(p) for p in self.MANIPULATION_PATTERNS]
+        if config_path:
+            injection_patterns, manipulation_patterns = self._load_config(config_path)
+        else:
+            injection_patterns = self.INJECTION_PATTERNS
+            manipulation_patterns = self.MANIPULATION_PATTERNS
+        self.injection_patterns = [re.compile(p) for p in injection_patterns]
+        self.manipulation_patterns = [re.compile(p) for p in manipulation_patterns]
         self.injection_threshold = injection_threshold
         self.manipulation_threshold = manipulation_threshold
+
+    @staticmethod
+    def _load_config(
+        config_path: str | Path,
+    ) -> tuple[list[str], list[str]]:
+        """Load injection and manipulation patterns from a YAML config file.
+
+        Args:
+            config_path: Path to YAML config file.
+
+        Returns:
+            Tuple of (injection_patterns, manipulation_patterns).
+        """
+        with open(config_path, encoding="utf-8") as f:
+            config = yaml.safe_load(f)
+        injection = [e["pattern"] for e in config.get("injection", [])]
+        manipulation = [e["pattern"] for e in config.get("manipulation", [])]
+        return injection, manipulation
 
     def detect(self, memories: list[dict[str, Any]]) -> list[Finding]:
         """Scan memories for poisoning indicators.

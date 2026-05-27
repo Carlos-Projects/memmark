@@ -1,0 +1,35 @@
+# Default poisoning detection patterns
+# Override by passing --patterns-config to `memmark scan` or
+# PoisoningDetector(config_path="/path/to/custom.yaml")
+
+injection:
+  - pattern: (?i)\b(ignore|disregard|override)\s+(previous|all|your)\s+(instructions|rules|guidelines)
+    description: Override instruction directives
+  - pattern: (?i)\b(from\s+now\s+on|henceforth|going\s+forward)\s+you\s+(must|should|will)
+    description: Future behavioral mandate
+  - pattern: (?i)\b(system\s*message|system\s*prompt|developer\s*message)\s*:
+    description: System message impersonation
+  - pattern: (?i)\b(new\s*(rule|instruction|directive|policy))\s*:
+    description: New rule injection
+  - pattern: (?i)\byou\s+are\s+(now|actually|really)\s+
+    description: Role reassignment
+  - pattern: (?i)\bforget\s+(everything|all|your)\s+(previous|prior|training)
+    description: Memory reset attempt
+  - pattern: (?i)\bact\s+as\s+(if|though)\s+you\s+(are|were)
+    description: Persona switch
+  - pattern: (?i)\[?instruction\]?[:\s]
+    description: Instruction bracket marker
+  - pattern: (?i)\[?system\]?[:\s]
+    description: System bracket marker
+  - pattern: (?i)\[?directive\]?[:\s]
+    description: Directive bracket marker
+
+manipulation:
+  - pattern: (?i)\b(always|never)\s+(respond|answer|say|output)\s+
+    description: Response pattern mandate
+  - pattern: (?i)\b(do\s*not|don't|never)\s+(mention|reveal|disclose|say)
+    description: Information suppression
+  - pattern: (?i)\b(your\s*)?(primary|main|only)\s+(goal|purpose|objective)\s+is
+    description: Goal redirection
+  - pattern: (?i)\b(ignore\s*)?(safety|ethical|content)\s+(policy|filter|guideline|rule)
+    description: Safety override

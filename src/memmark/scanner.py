@@ -15,6 +15,9 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from memmark.utils.crypto import hash_memory_entry, hash_memory_state
+from memmark.utils.logging import correlation_id, get_logger
+
+log = get_logger("scanner")
 
 
 class MemoryEntry(BaseModel):
@@ -195,12 +198,20 @@ class MemoryScanner:
         """
         if isinstance(source, (str, Path)):
             path = Path(source)
+            log.info("Loading memory from file", extra={"ctx": {"path": str(path)}})
             with open(path, encoding="utf-8") as f:
                 data = json.load(f)
             if isinstance(data, dict):
                 data = data.get("memories", data.get("entries", [data]))
-            return validate_memory_entries(data)
-        return validate_memory_entries(source)
+            result = validate_memory_entries(data)
+            log.info(
+                "Memory loaded",
+                extra={"ctx": {"entries": len(result), "path": str(path)}},
+            )
+            return result
+        result = validate_memory_entries(source)
+        log.info("Memory loaded from list", extra={"ctx": {"entries": len(result)}})
+        return result
 
     def compute_memory_hash(self, memories: list[dict[str, Any]]) -> str:
         """Compute deterministic hash of memory state.
@@ -285,6 +296,15 @@ def run_full_scan(
     from memmark.integrity.forensics import MemoryForensics
     from memmark.poisoning.detector import PoisoningDetector
 
+    scan_id = scan_id or f"scan-{uuid.uuid4().hex[:12]}"
+    cid = correlation_id()
+    log.info(
+        "Starting scan",
+        extra={
+            "ctx": {"scan_id": scan_id, "correlation_id": cid, "entries": len(memories)}
+        },
+    )
+
     scanner = MemoryScanner()
 
     # 1. Poisoning detection
@@ -292,6 +312,10 @@ def run_full_scan(
     poison_findings = poison_detector.detect(memories)
     for f in poison_findings:
         scanner.add_finding(f)
+    log.info(
+        "Poisoning detection complete",
+        extra={"ctx": {"findings": len(poison_findings), "correlation_id": cid}},
+    )
 
     # 2. Watermark detection
     if watermark_key:
@@ -324,6 +348,15 @@ def run_full_scan(
     # 3. Forensic analysis
     forensics = MemoryForensics()
     forensic_results = forensics.analyze(memories)
+    log.info(
+        "Forensic analysis complete",
+        extra={
+            "ctx": {
+                "anomaly_score": forensic_results.get("anomaly_score", 0.0),
+                "correlation_id": cid,
+            }
+        },
+    )
 
     anomaly_score = forensic_results.get("anomaly_score", 0.0)
     if anomaly_score > 0.5:
@@ -336,8 +369,19 @@ def run_full_scan(
             ),
         )
 
-    return scanner.build_result(
-        scan_id=scan_id or str(uuid.uuid4())[:8],
+    result = scanner.build_result(
+        scan_id=scan_id,
         memories=memories,
         metadata=metadata or {},
     )
+    log.info(
+        "Scan complete",
+        extra={
+            "ctx": {
+                "scan_id": scan_id,
+                "findings": len(result.findings),
+                "correlation_id": cid,
+            }
+        },
+    )
+    return result

@@ -149,21 +149,28 @@ class TestWatermarkDetector:
         sig = _legacy_hmac_sign(detector.injector._canonicalize(entry), "key")
         entry[WatermarkInjector.SIGNATURE_KEY] = sig
         result = detector._detect_entry(entry)
-        assert not result["valid"]
-        assert result["reason"] == "signature_mismatch"
+        assert result["valid"]
+        assert result["reason"] == "verified"
 
-    def test_detect_entry_legacy_fallback_path(self) -> None:
-        from memmark.watermark.detector import _legacy_hmac_sign
-
+    def test_detect_entry_legacy_mismatch(self) -> None:
         detector = WatermarkDetector(secret_key="key")
         entry = {"id": "mem-001", "content": "test"}
         entry[WatermarkInjector.WATERMARK_KEY] = {
             "version": "1.0",
             "algorithm": "hmac-sha256",
         }
-        canonical = detector.injector._canonicalize(entry)
-        legacy_sig = _legacy_hmac_sign(canonical, "key")
-        entry[WatermarkInjector.SIGNATURE_KEY] = "zz" * 16 + legacy_sig
+        entry[WatermarkInjector.SIGNATURE_KEY] = "a" * 64
+        result = detector._detect_entry(entry)
+        assert not result["valid"]
+
+    def test_detect_entry_unknown_format(self) -> None:
+        detector = WatermarkDetector(secret_key="key")
+        entry = {"id": "mem-001", "content": "test"}
+        entry[WatermarkInjector.WATERMARK_KEY] = {
+            "version": "1.0",
+            "algorithm": "hmac-sha256",
+        }
+        entry[WatermarkInjector.SIGNATURE_KEY] = "short"
         result = detector._detect_entry(entry)
         assert not result["valid"]
 

@@ -32,15 +32,19 @@ from memmark.utils.crypto import (
     sha256_file,
     sha256_hash,
 )
+from memmark.utils.logging import configure_logging, correlation_id, get_logger
 from memmark.watermark.detector import WatermarkDetector
 from memmark.watermark.injector import WatermarkInjector
 from memmark.watermark.robustness import WatermarkRobustnessTester
 
 __all__ = [
     "AttackType",
+    "configure_logging",
     "ConsoleReporter",
+    "correlation_id",
     "Finding",
     "FindingType",
+    "get_logger",
     "HtmlReporter",
     "IntegrityManifest",
     "JsonReporter",

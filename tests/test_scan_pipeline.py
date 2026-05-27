@@ -93,4 +93,5 @@ class TestRunFullScan:
     def test_scan_id_generated(self) -> None:
         result = run_full_scan([{"id": "test", "content": "test"}])
         assert isinstance(result.scan_id, str)
-        assert len(result.scan_id) == 8
+        assert result.scan_id.startswith("scan-")
+        assert len(result.scan_id) > 8

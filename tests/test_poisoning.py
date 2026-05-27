@@ -1,5 +1,10 @@
 """Tests for the poisoning module."""
 
+import tempfile
+from pathlib import Path
+
+import yaml
+
 from memmark.poisoning.classifier import AttackType, PoisoningClassifier
 from memmark.poisoning.detector import PoisoningDetector
 from memmark.poisoning.remediation import PoisoningRemediation
@@ -143,6 +148,39 @@ class TestPoisoningDetector:
             f for f in findings if "manipulation" in f.description.lower()
         ]
         assert len(manipulation_findings) > 0
+
+    def test_detect_with_custom_config(self) -> None:
+        config = {
+            "injection": [
+                {
+                    "pattern": r"custom-inject-pattern",
+                    "description": "Custom injection",
+                },
+            ],
+            "manipulation": [
+                {
+                    "pattern": r"custom-manip-pattern",
+                    "description": "Custom manipulation",
+                },
+            ],
+        }
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            yaml.dump(config, f)
+            path = f.name
+        try:
+            detector = PoisoningDetector(
+                config_path=path,
+                injection_threshold=0.1,
+                manipulation_threshold=0.1,
+            )
+            memories = [
+                {"id": "mem-001", "content": "This has custom-inject-pattern in it"},
+                {"id": "mem-002", "content": "custom-manip-pattern here too"},
+            ]
+            findings = detector.detect(memories)
+            assert len(findings) == 2
+        finally:
+            Path(path).unlink()
 
 
 class TestPoisoningClassifier:
