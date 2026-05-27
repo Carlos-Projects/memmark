@@ -51,20 +51,24 @@ def scan(
     ],
     output: Annotated[
         Path | None,
-        typer.Option("--output", "-o", help="Output file for scan results"),
+        typer.Option(
+            "--output", "-o", help="Write scan results to file (default: stdout)"
+        ),
     ] = None,
     format: Annotated[
         str,
-        typer.Option("--format", "-f", help="Output format: json, console"),
+        typer.Option("--format", "-f", help="Output format: json | console"),
     ] = "console",
     watermark_key: Annotated[
         str | None,
         typer.Option(
-            "--watermark-key", "-k", help="Secret key for watermark detection"
+            "--watermark-key",
+            "-k",
+            help="Secret key for HMAC watermark detection (optional, disables watermark check if omitted)",
         ),
     ] = None,
 ) -> None:
-    """Scan agent memory for integrity issues, poisoning, and missing watermarks."""
+    """Run all detectors on memory — poisoning, watermark, forensics."""
     try:
         memories = _load_memories(memory_file)
     except (FileNotFoundError, json.JSONDecodeError) as e:
@@ -96,12 +100,16 @@ def watermark(
     ],
     action: Annotated[
         str,
-        typer.Option("--action", "-a", help="Action: inject, detect, verify"),
+        typer.Option(
+            "--action",
+            "-a",
+            help="Action: inject (embed watermark) | detect (verify) | verify (check provenance)",
+        ),
     ] = "detect",
     key: Annotated[
         str | None,
         typer.Option(
-            "--key", "-k", help="Secret key for watermark operations (required)"
+            "--key", "-k", help="Secret key for watermark operations (⚠️ required)"
         ),
     ] = None,
     output: Annotated[
@@ -160,7 +168,10 @@ def verify(
         typer.Option("--manifest", "-m", help="Path to integrity manifest"),
     ],
 ) -> None:
-    """Verify memory integrity against a manifest."""
+    """Verify memory integrity against an integrity manifest.
+
+    Compares current SHA-256 hash against the stored manifest hash."""
+
     from memmark.integrity.manifest import IntegrityManifest
     from memmark.utils.crypto import hash_memory_state
 

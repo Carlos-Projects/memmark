@@ -20,6 +20,7 @@ nav:
     - Provenance: guide/provenance.md
     - Integrity: guide/integrity.md
     - Security Model: guide/security.md
+    - Migration Guide: guide/migration.md
   - API Reference:
     - Overview: api/index.md
     - Scanner: api/scanner.md
