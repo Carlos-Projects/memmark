@@ -72,8 +72,22 @@ class TestWatermarkInjector:
             "c"
         ) == injector.generate_watermark_token("c")
 
+    def test_inject_skips_non_dict(self) -> None:
+        injector = WatermarkInjector(secret_key="key")
+        result = injector.inject([{"id": "mem-001", "content": "ok"}, "not-a-dict", 42])
+        assert len(result) == 3
+        assert WatermarkInjector.SIGNATURE_KEY in result[0]
+        assert not isinstance(result[1], dict)
+        assert result[2] == 42
+
 
 class TestWatermarkDetector:
+    def test_init_empty_key_raises(self) -> None:
+        import pytest
+
+        with pytest.raises(ValueError, match="must not be empty"):
+            WatermarkDetector(secret_key="")
+
     def test_detect_no_watermarks(self) -> None:
         detector = WatermarkDetector(secret_key="test-key")
         results = detector.detect(SAMPLE_MEMORIES)
@@ -122,6 +136,36 @@ class TestWatermarkDetector:
         result = detector._detect_entry(entry)
         assert not result["valid"]
         assert result["reason"] == "signature_mismatch"
+
+    def test_detect_entry_legacy_signature(self) -> None:
+        from memmark.watermark.detector import _legacy_hmac_sign
+
+        detector = WatermarkDetector(secret_key="key")
+        entry = {"id": "mem-001", "content": "test"}
+        entry[WatermarkInjector.WATERMARK_KEY] = {
+            "version": "1.0",
+            "algorithm": "hmac-sha256",
+        }
+        sig = _legacy_hmac_sign(detector.injector._canonicalize(entry), "key")
+        entry[WatermarkInjector.SIGNATURE_KEY] = sig
+        result = detector._detect_entry(entry)
+        assert not result["valid"]
+        assert result["reason"] == "signature_mismatch"
+
+    def test_detect_entry_legacy_fallback_path(self) -> None:
+        from memmark.watermark.detector import _legacy_hmac_sign
+
+        detector = WatermarkDetector(secret_key="key")
+        entry = {"id": "mem-001", "content": "test"}
+        entry[WatermarkInjector.WATERMARK_KEY] = {
+            "version": "1.0",
+            "algorithm": "hmac-sha256",
+        }
+        canonical = detector.injector._canonicalize(entry)
+        legacy_sig = _legacy_hmac_sign(canonical, "key")
+        entry[WatermarkInjector.SIGNATURE_KEY] = "zz" * 16 + legacy_sig
+        result = detector._detect_entry(entry)
+        assert not result["valid"]
 
 
 class TestWatermarkRobustness:

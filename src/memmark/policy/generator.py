@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Carlos Rocha
+# SPDX-License-Identifier: MIT
+
 """Memory protection policy generator for MCPGuard.
 
 Generates MCPGuard-compatible YAML policies from MemMark scan findings

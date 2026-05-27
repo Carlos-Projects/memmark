@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Carlos Rocha
+# SPDX-License-Identifier: MIT
+
 """HTML reporter for MemMark scan results using Jinja2 templates."""
 
 from __future__ import annotations

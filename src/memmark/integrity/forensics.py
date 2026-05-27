@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Carlos Rocha
+# SPDX-License-Identifier: MIT
+
 """Memory forensics for AI agent memory systems.
 
 Analyzes memory patterns to detect behavioral anomalies,
@@ -109,7 +112,9 @@ class MemoryForensics:
             }
 
         mean_length = statistics.mean(content_lengths)
-        std_length = statistics.stdev(content_lengths) if len(content_lengths) > 1 else 0
+        std_length = (
+            statistics.stdev(content_lengths) if len(content_lengths) > 1 else 0
+        )
 
         # Detect outliers
         outlier_threshold = mean_length + 3 * std_length
@@ -176,14 +181,16 @@ class MemoryForensics:
         content = self._analyze_content(memories)
         sources = self._analyze_sources(memories)
 
-        anomaly_count = sum([
-            temporal.get("has_anomaly", False),
-            content.get("has_anomaly", False),
-            sources.get("has_anomaly", False),
-        ])
+        anomaly_count = sum(
+            [
+                temporal.get("has_anomaly", False),
+                content.get("has_anomaly", False),
+                sources.get("has_anomaly", False),
+            ]
+        )
 
         # Base score from anomaly count
-        score = anomaly_count / 3.0
+        score: float = anomaly_count / 3.0
 
         # Boost for high uniformity (strong injection indicator)
         uniformity = content.get("uniformity_score", 0)

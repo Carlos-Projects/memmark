@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Carlos Rocha
+# SPDX-License-Identifier: MIT
+
 """JSON reporter for MemMark scan results."""
 
 from __future__ import annotations

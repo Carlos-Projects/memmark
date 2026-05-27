@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Carlos Rocha
+# SPDX-License-Identifier: MIT
+
 """Memory watermark detector for AI agent long-term memory systems.
 
 Detects and verifies watermarks embedded in memory entries

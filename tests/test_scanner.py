@@ -4,7 +4,15 @@ import json
 import tempfile
 from pathlib import Path
 
-from memmark.scanner import Finding, FindingType, MemoryScanner, ScanResult, Severity
+from memmark.scanner import (
+    Finding,
+    FindingType,
+    MemoryEntry,
+    MemoryScanner,
+    ScanResult,
+    Severity,
+    validate_memory_entries,
+)
 
 
 class TestFinding:
@@ -210,3 +218,32 @@ class TestMemoryScanner:
         except FileNotFoundError:
             raised = True
         assert raised
+
+
+class TestMemoryEntry:
+    def test_from_dict(self) -> None:
+        entry = MemoryEntry.from_dict({"id": "mem-001", "content": "hello"})
+        assert entry.id == "mem-001"
+        assert entry.content == "hello"
+
+    def test_from_dict_minimal(self) -> None:
+        entry = MemoryEntry.from_dict({"id": "mem-001"})
+        assert entry.content == ""
+
+    def test_from_dict_extra_fields(self) -> None:
+        entry = MemoryEntry.from_dict({"id": "mem-001", "extra": "value"})
+        assert entry.id == "mem-001"
+
+    def test_from_dict_memory_id_alias(self) -> None:
+        entry = MemoryEntry.from_dict({"memory_id": "mem-001"})
+        assert entry.id == "mem-001"
+
+
+class TestValidateMemoryEntries:
+    def test_valid_entries(self) -> None:
+        result = validate_memory_entries([{"id": "mem-001", "content": "test"}])
+        assert len(result) == 1
+
+    def test_invalid_entries_pass_through(self) -> None:
+        result = validate_memory_entries(["not-a-dict", 42])
+        assert len(result) == 2

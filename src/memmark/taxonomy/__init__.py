@@ -1,1 +1,4 @@
+# Copyright (c) 2025 Carlos Rocha
+# SPDX-License-Identifier: MIT
+
 """mcp-taxonomy adapter for MemMark findings interoperability."""

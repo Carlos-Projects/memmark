@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Carlos Rocha
+# SPDX-License-Identifier: MIT
+
 """Memory provenance verifier for AI agent memory systems.
 
 Verifies the integrity and authenticity of provenance chains
@@ -100,24 +103,30 @@ class ProvenanceVerifier:
         suspicious: list[dict[str, Any]] = []
 
         for entry in memories:
-            memory_id = entry.get("id", entry.get("memory_id"))
+            memory_id: Any = entry.get("id", entry.get("memory_id"))
+            if not isinstance(memory_id, str):
+                continue
             record = tracker.get_record(memory_id)
 
             if not record:
-                suspicious.append({
-                    "memory_id": memory_id,
-                    "issue": "no_provenance_record",
-                    "severity": "high",
-                })
+                suspicious.append(
+                    {
+                        "memory_id": memory_id,
+                        "issue": "no_provenance_record",
+                        "severity": "high",
+                    }
+                )
                 continue
 
             verification = self.verify_entry(record)
             if not verification["valid"]:
-                suspicious.append({
-                    "memory_id": memory_id,
-                    "issue": "provenance_chain_invalid",
-                    "severity": "critical",
-                    "details": verification,
-                })
+                suspicious.append(
+                    {
+                        "memory_id": memory_id,
+                        "issue": "provenance_chain_invalid",
+                        "severity": "critical",
+                        "details": verification,
+                    }
+                )
 
         return suspicious

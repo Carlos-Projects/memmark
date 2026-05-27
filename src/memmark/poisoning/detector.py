@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Carlos Rocha
+# SPDX-License-Identifier: MIT
+
 """Memory poisoning detector for AI agent long-term memory systems.
 
 Detects injection of malicious or manipulative memories that could
@@ -9,7 +12,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 
 from memmark.scanner import Finding, FindingType, Severity
 
@@ -142,10 +145,10 @@ class PoisoningDetector:
         """
         for key in ("content", "text", "value", "data", "message", "body"):
             if key in entry and isinstance(entry[key], str):
-                return entry[key]
+                return cast(str, entry[key])
         return ""
 
-    def _score_patterns(self, text: str, patterns: list[re.Pattern]) -> float:
+    def _score_patterns(self, text: str, patterns: list[re.Pattern[str]]) -> float:
         """Score text against a list of patterns.
 
         Args:

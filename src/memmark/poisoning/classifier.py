@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Carlos Rocha
+# SPDX-License-Identifier: MIT
+
 """Memory poisoning classifier for AI agent memory systems.
 
 Classifies detected poisoning attempts by attack type,
@@ -28,27 +31,47 @@ class PoisoningClassifier:
     # Keyword mappings for attack type classification
     ATTACK_KEYWORDS: dict[AttackType, list[str]] = {
         AttackType.INSTRUCTION_INJECTION: [
-            "ignore previous", "disregard", "override", "new instruction",
-            "from now on", "system message", "directive",
+            "ignore previous",
+            "disregard",
+            "override",
+            "new instruction",
+            "from now on",
+            "system message",
+            "directive",
         ],
         AttackType.BEHAVIORAL_MANIPULATION: [
-            "always respond", "never mention", "your purpose", "your goal",
-            "you must", "you should",
+            "always respond",
+            "never mention",
+            "your purpose",
+            "your goal",
+            "you must",
+            "you should",
         ],
         AttackType.CONTEXT_POLLUTION: [
-            "remember that", "as stated before", "as we discussed",
+            "remember that",
+            "as stated before",
+            "as we discussed",
             "previously agreed",
         ],
         AttackType.ROLE_HIJACKING: [
-            "you are now", "act as", "pretend to be", "your new role",
+            "you are now",
+            "act as",
+            "pretend to be",
+            "your new role",
             "you are actually",
         ],
         AttackType.SAFETY_BYPASS: [
-            "ignore safety", "bypass filter", "disable moderation",
-            "ignore ethical", "no restrictions",
+            "ignore safety",
+            "bypass filter",
+            "disable moderation",
+            "ignore ethical",
+            "no restrictions",
         ],
         AttackType.TOOL_DRIFT: [
-            "use this tool", "always call", "never use", "preferred tool",
+            "use this tool",
+            "always call",
+            "never use",
+            "preferred tool",
             "default action",
         ],
     }
@@ -84,15 +107,13 @@ class PoisoningClassifier:
                 "matched_keywords": [],
             }
 
-        primary_type = max(type_scores, key=type_scores.get)
+        primary_type = max(type_scores, key=lambda k: type_scores[k])
         max_score = type_scores[primary_type]
         total_keywords = len(self.ATTACK_KEYWORDS[primary_type])
         confidence = min(max_score / max(total_keywords * 0.5, 1), 1.0)
 
         matched = [
-            kw
-            for kw in self.ATTACK_KEYWORDS[primary_type]
-            if kw in content_lower
+            kw for kw in self.ATTACK_KEYWORDS[primary_type] if kw in content_lower
         ]
 
         return {
@@ -122,7 +143,9 @@ class PoisoningClassifier:
             manipulation_score = entry.get("manipulation_score", 0.0)
 
             classification = self.classify(content, injection_score, manipulation_score)
-            classification["memory_id"] = entry.get("id", entry.get("memory_id", "unknown"))
+            classification["memory_id"] = entry.get(
+                "id", entry.get("memory_id", "unknown")
+            )
             results.append(classification)
 
         return results

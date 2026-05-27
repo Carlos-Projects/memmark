@@ -1,44 +1,41 @@
 {
-  "manifest_id": "demo-manifest-001",
+  "manifest_id": "a1b61308-4269-45e4-8d20-e3b1bfef0ad9",
   "version": "1.0",
-  "created_at": "2025-01-20T12:00:00Z",
-  "source": "examples/sample_memory.json",
-  "memory_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "created_at": "2026-05-27T00:30:01.994163+00:00",
+  "source": "sample_memory.json",
+  "memory_hash": "ce477f545b0d20fe9d37e85fea7ec638bb4c36d14f1de562373e1a662d9abb8b",
   "entry_count": 5,
   "entries": [
     {
       "memory_id": "mem-001",
-      "hash": "abc123def456...",
-      "size": 256,
-      "metadata": {"category": "preference"}
+      "hash": "9e02a4fc967ceac631eda9536dfda4e7f465da1a1fb76cc9bc9541caa020ffa2",
+      "size": 158,
+      "metadata": {}
     },
     {
       "memory_id": "mem-002",
-      "hash": "def789ghi012...",
-      "size": 128,
-      "metadata": {"category": "fact"}
+      "hash": "8ecaffd53a481b9f038441dd14be995a5d25fee62a715b560367ebaeb51eeb23",
+      "size": 140,
+      "metadata": {}
     },
     {
       "memory_id": "mem-003",
-      "hash": "ghi345jkl678...",
-      "size": 192,
-      "metadata": {"category": "skill"}
+      "hash": "cf15ef87aca481ca409f0a156150143d6d6976b20f59a45e14897b175907b1d9",
+      "size": 148,
+      "metadata": {}
     },
     {
       "memory_id": "mem-004",
-      "hash": "jkl901mno234...",
-      "size": 384,
-      "metadata": {"category": "instruction", "flagged": true}
+      "hash": "3b47bdc6f9e53cb91601652eddfd868167ba86a832fcfcfcde1499b905dd0a0a",
+      "size": 202,
+      "metadata": {}
     },
     {
       "memory_id": "mem-005",
-      "hash": "mno567pqr890...",
-      "size": 256,
-      "metadata": {"category": "directive", "flagged": true}
+      "hash": "9bf002baa572ba966ac5010c295c3f8747fdc91cf3c43080591871cc2702b4e3",
+      "size": 182,
+      "metadata": {}
     }
   ],
-  "metadata": {
-    "scanner_version": "0.1.0",
-    "scan_profile": "full"
-  }
+  "metadata": {}
 }

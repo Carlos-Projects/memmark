@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Carlos Rocha
+# SPDX-License-Identifier: MIT
+
 """Memory integrity manifest for AI agent memory systems.
 
 Generates and verifies SHA-256 manifests of memory state

@@ -29,6 +29,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Security",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
@@ -42,12 +43,23 @@ dependencies = [
     "mcp-taxonomy>=0.1.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/Carlos-Projects/memmark"
+Repository = "https://github.com/Carlos-Projects/memmark"
+Issues = "https://github.com/Carlos-Projects/memmark/issues"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
     "pytest-cov>=5.0.0",
     "ruff>=0.4.0",
+    "mypy>=1.10.0",
+]
+docs = [
+    "mkdocs>=1.6.0",
+    "mkdocstrings[python]>=1.10.0",
+    "mkdocs-material>=9.5.0",
 ]
 
 [project.scripts]
@@ -86,3 +98,10 @@ exclude_lines = [
     "raise NotImplementedError",
 ]
 fail_under = 80
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+warn_unused_ignores = true
+exclude = ["tests/"]

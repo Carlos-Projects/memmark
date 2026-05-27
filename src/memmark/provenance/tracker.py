@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Carlos Rocha
+# SPDX-License-Identifier: MIT
+
 """Memory provenance tracker for AI agent memory systems.
 
 Tracks the origin and evolution of each memory entry

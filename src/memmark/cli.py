@@ -1,10 +1,13 @@
+# Copyright (c) 2025 Carlos Rocha
+# SPDX-License-Identifier: MIT
+
 """CLI interface for MemMark memory integrity toolkit."""
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 import typer
 from rich.console import Console
@@ -287,7 +290,7 @@ def _display_scan_result(result: ScanResult) -> None:
         console.print(table)
 
 
-def _display_watermark_results(results: list[dict]) -> None:
+def _display_watermark_results(results: list[dict[str, Any]]) -> None:
     """Display watermark detection results."""
     table = Table(title="Watermark Detection Results")
     table.add_column("Memory ID", style="bold")
@@ -372,7 +375,7 @@ def generate_policy(
         console.print(f"  Block resource scan: {policy.block_resource_scan}")
 
 
-def _load_memories(source: Path) -> list[dict]:
+def _load_memories(source: Path) -> list[dict[str, Any]]:
     """Load memory entries from a JSON file.
 
     Args:

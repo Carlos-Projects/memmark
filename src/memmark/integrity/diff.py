@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Carlos Rocha
+# SPDX-License-Identifier: MIT
+
 """Memory diff engine for AI agent memory systems.
 
 Compares two memory states to detect unauthorized changes,

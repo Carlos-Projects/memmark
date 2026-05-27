@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Carlos Rocha
+# SPDX-License-Identifier: MIT
+
 """Cryptographic utility functions for memory integrity verification."""
 
 import hashlib

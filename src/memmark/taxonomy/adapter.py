@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Carlos Rocha
+# SPDX-License-Identifier: MIT
+
 """mcp-taxonomy adapter for MemMark findings.
 
 Translates MemMark Finding objects into canonical TaxonomyEvent
@@ -80,13 +83,13 @@ def memmark_finding_to_taxonomy(finding: Finding | dict[str, Any]) -> TaxonomyEv
         severity = severities.get(severity_str, MemMarkSeverity.MEDIUM)
         memory_id = finding.get("memory_id")
         description = finding.get("description", "")
-        raw = finding
+        raw: dict[str, Any] | None = finding
     else:
         finding_type = finding.finding_type
         severity = finding.severity
         memory_id = finding.memory_id
         description = finding.description
-        raw = finding.to_dict() if hasattr(finding, "to_dict") else None
+        raw = finding.to_dict()
 
     attack_category = _MEMMARK_FINDING_TYPE_MAP.get(
         finding_type,

@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Carlos Rocha
+# SPDX-License-Identifier: MIT
+
 """Watermark robustness testing for AI agent memory systems.
 
 Tests watermark resilience against common transformations:
@@ -135,5 +138,5 @@ class WatermarkRobustnessTester:
         if not transforms:
             return 0.0
 
-        rates = [t["retention_rate"] for t in transforms.values()]
-        return sum(rates) / len(rates)
+        rates: list[float] = [t["retention_rate"] for t in transforms.values()]
+        return float(sum(rates)) / len(rates)

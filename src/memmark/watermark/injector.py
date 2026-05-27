@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Carlos Rocha
+# SPDX-License-Identifier: MIT
+
 """Memory watermark injector for AI agent long-term memory systems.
 
 Implements state-evolution attribution watermarking based on
@@ -52,6 +55,9 @@ class WatermarkInjector:
         """
         watermarked = []
         for entry in memories:
+            if not isinstance(entry, dict):
+                watermarked.append(entry)
+                continue
             watermarked.append(self._inject_entry(entry))
         return watermarked
 

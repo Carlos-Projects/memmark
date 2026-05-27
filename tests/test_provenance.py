@@ -64,6 +64,17 @@ class TestProvenanceTracker:
         assert chain[0].memory_id == "mem-001"
         assert chain[1].memory_id == "mem-002"
 
+    def test_get_chain_breaks_on_missing_parent(self) -> None:
+        tracker = ProvenanceTracker()
+        tracker.register("mem-001", "user")
+        chain = tracker.get_chain("mem-001")
+        assert len(chain) == 1
+
+    def test_get_chain_nonexistent(self) -> None:
+        tracker = ProvenanceTracker()
+        chain = tracker.get_chain("nonexistent")
+        assert chain == []
+
     def test_export(self) -> None:
         tracker = ProvenanceTracker()
         tracker.register("mem-001", "user")
@@ -148,6 +159,43 @@ class TestProvenanceVerifier:
         suspicious = verifier.detect_forged_provenance(forged, tracker)
         assert len(suspicious) == 1
         assert suspicious[0]["issue"] == "no_provenance_record"
+
+    def test_detect_forged_with_modified_entry(self) -> None:
+        verifier = ProvenanceVerifier()
+        tracker = ProvenanceTracker()
+        tracker.register("mem-001", "user")
+        tracker.records["mem-001"].chain_hash = "0" * 64
+        forged = [{"id": "mem-001", "content": "tampered content"}]
+        suspicious = verifier.detect_forged_provenance(forged, tracker)
+        assert len(suspicious) == 1
+        assert suspicious[0]["issue"] == "provenance_chain_invalid"
+
+    def test_detect_forged_skips_non_string_id(self) -> None:
+        verifier = ProvenanceVerifier()
+        tracker = ProvenanceTracker()
+        suspicious = verifier.detect_forged_provenance(
+            [{"id": None, "content": "test"}], tracker
+        )
+        assert len(suspicious) == 0
+
+    def test_verify_chain_hash_mismatch(self) -> None:
+        verifier = ProvenanceVerifier()
+        tracker = ProvenanceTracker()
+        tracker.register("mem-001", "user")
+        record = tracker.records["mem-001"]
+        record.chain_hash = "0" * 64
+        result = verifier.verify_chain(tracker)
+        assert not result["valid"]
+        assert any("Chain hash mismatch" in i for i in result["issues"])
+
+    def test_verify_chain_head_mismatch(self) -> None:
+        verifier = ProvenanceVerifier()
+        tracker = ProvenanceTracker()
+        tracker.register("mem-001", "user")
+        tracker.chain_head = "0" * 64
+        result = verifier.verify_chain(tracker)
+        assert not result["valid"]
+        assert any("Chain head" in i for i in result["issues"])
 
 
 class TestProvenanceGraph:

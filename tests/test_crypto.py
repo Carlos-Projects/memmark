@@ -24,7 +24,7 @@ class TestSha256:
         assert isinstance(h, str)
         assert len(h) == 64
 
-    def hash_deterministic_string(self) -> None:
+    def test_hash_deterministic_string(self) -> None:
         assert sha256_hash("test") == sha256_hash("test")
 
     def test_hash_different(self) -> None:
@@ -89,6 +89,10 @@ class TestHmac:
         salt = b"\x01" * 16
         sig = hmac_sign("data", "key", salt=salt)
         assert hmac_verify("data", "key", sig)
+
+    def test_verify_invalid_hex_salt(self) -> None:
+        """Signature with invalid hex characters in salt portion."""
+        assert not hmac_verify("data", "key", "ZZZZ" * 8 + "a" * 64)
 
 
 class TestMemoryHash:

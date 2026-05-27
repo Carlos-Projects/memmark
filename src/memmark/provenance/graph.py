@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Carlos Rocha
+# SPDX-License-Identifier: MIT
+
 """Memory provenance graph for AI agent memory systems.
 
 Builds and analyzes the graph of memory dependencies
@@ -184,7 +187,7 @@ class ProvenanceGraph:
             Cycle path if found, None otherwise.
         """
         path: list[str] = []
-        current = start_id
+        current: str | None = start_id
 
         while current:
             if current in path:

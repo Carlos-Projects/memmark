@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Carlos Rocha
+# SPDX-License-Identifier: MIT
+
 """Memory poisoning remediation for AI agent memory systems.
 
 Provides automated and guided remediation for detected
