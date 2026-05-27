@@ -174,33 +174,41 @@ class IntegrityManifest:
             manifest_entry = manifest_map.get(memory_id)
             if not manifest_entry:
                 results["new"] += 1
-                results["details"].append({
-                    "memory_id": memory_id,
-                    "status": "new",
-                })
+                results["details"].append(
+                    {
+                        "memory_id": memory_id,
+                        "status": "new",
+                    }
+                )
             elif manifest_entry.hash != current_hash:
                 results["modified"] += 1
-                results["details"].append({
-                    "memory_id": memory_id,
-                    "status": "modified",
-                    "expected_hash": manifest_entry.hash,
-                    "actual_hash": current_hash,
-                })
+                results["details"].append(
+                    {
+                        "memory_id": memory_id,
+                        "status": "modified",
+                        "expected_hash": manifest_entry.hash,
+                        "actual_hash": current_hash,
+                    }
+                )
             else:
                 results["verified"] += 1
-                results["details"].append({
-                    "memory_id": memory_id,
-                    "status": "verified",
-                })
+                results["details"].append(
+                    {
+                        "memory_id": memory_id,
+                        "status": "verified",
+                    }
+                )
 
         # Check for missing entries
         for manifest_entry in self.entries:
             if manifest_entry.memory_id not in current_ids:
                 results["missing"] += 1
-                results["details"].append({
-                    "memory_id": manifest_entry.memory_id,
-                    "status": "missing",
-                })
+                results["details"].append(
+                    {
+                        "memory_id": manifest_entry.memory_id,
+                        "status": "missing",
+                    }
+                )
 
         return results
 

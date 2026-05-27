@@ -159,9 +159,7 @@ class ProvenanceTracker:
         """
         return {
             "chain_head": self.chain_head,
-            "records": {
-                mid: rec.to_dict() for mid, rec in self.records.items()
-            },
+            "records": {mid: rec.to_dict() for mid, rec in self.records.items()},
         }
 
     def load(self, data: dict[str, Any]) -> None:

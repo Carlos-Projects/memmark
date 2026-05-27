@@ -110,7 +110,7 @@ class HtmlReporter:
             HTML string.
         """
         summary = result.to_dict()["summary"]
-        return self.template.render(
+        return self.template.render(  # type: ignore[no-any-return]
             scan_id=result.scan_id,
             timestamp=result.timestamp.isoformat(),
             memory_hash=result.memory_hash,

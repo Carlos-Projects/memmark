@@ -36,7 +36,11 @@ class ConsoleReporter:
     def _display_header(self, result: ScanResult) -> None:
         """Display scan header panel."""
         summary = result.to_dict()["summary"]
-        status = "[green]CLEAN[/green]" if summary["is_clean"] else "[red]ISSUES DETECTED[/red]"
+        status = (
+            "[green]CLEAN[/green]"
+            if summary["is_clean"]
+            else "[red]ISSUES DETECTED[/red]"
+        )
 
         self.console.print(
             Panel(

@@ -68,18 +68,21 @@ class MemoryDiff:
 
             if before_hash != after_hash:
                 diff.modified += 1
-                diff.modified_entries.append({
-                    "memory_id": mid,
-                    "before": before_map[mid],
-                    "after": after_map[mid],
-                    "before_hash": before_hash,
-                    "after_hash": after_hash,
-                })
+                diff.modified_entries.append(
+                    {
+                        "memory_id": mid,
+                        "before": before_map[mid],
+                        "after": after_map[mid],
+                        "before_hash": before_hash,
+                        "after_hash": after_hash,
+                    }
+                )
             else:
                 diff.unchanged += 1
 
         # Compute state hashes
         from memmark.utils.crypto import hash_memory_state
+
         diff.before_hash = hash_memory_state(before)
         diff.after_hash = hash_memory_state(after)
 

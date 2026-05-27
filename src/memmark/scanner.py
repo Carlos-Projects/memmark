@@ -6,6 +6,8 @@
 from __future__ import annotations
 
 import json
+import uuid
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -20,7 +22,7 @@ from memmark.utils.logging import correlation_id, get_logger
 log = get_logger("scanner")
 
 
-class MemoryEntry(BaseModel):
+class MemoryEntry(BaseModel):  # type: ignore[misc]
     """Validated schema for a single memory entry.
 
     Ensures memory data has consistent structure before processing.
@@ -44,7 +46,7 @@ class MemoryEntry(BaseModel):
         Returns:
             Validated MemoryEntry.
         """
-        return cls.model_validate(data)
+        return cls.model_validate(data)  # type: ignore[no-any-return]
 
 
 def validate_memory_entries(
@@ -182,12 +184,12 @@ class MemoryScanner:
         self.findings: list[Finding] = []
 
     def load_memory(
-        self, source: str | Path | list[dict[str, Any]]
+        self, source: str | Path | list[dict[str, Any]] | Any
     ) -> list[dict[str, Any]]:
-        """Load memory from file path or raw data.
+        """Load memory from file path, MemoryStore, or raw data.
 
         Args:
-            source: JSON file path or list of memory entries.
+            source: JSON file path, MemoryStore instance, or list of entries.
 
         Returns:
             List of memory entry dictionaries.
@@ -196,7 +198,7 @@ class MemoryScanner:
             FileNotFoundError: If file path does not exist.
             json.JSONDecodeError: If JSON is invalid.
         """
-        if isinstance(source, (str, Path)):
+        if isinstance(source, str | Path):
             path = Path(source)
             log.info("Loading memory from file", extra={"ctx": {"path": str(path)}})
             with open(path, encoding="utf-8") as f:
@@ -207,6 +209,12 @@ class MemoryScanner:
             log.info(
                 "Memory loaded",
                 extra={"ctx": {"entries": len(result), "path": str(path)}},
+            )
+            return result
+        if hasattr(source, "read"):
+            result = validate_memory_entries(source.read())
+            log.info(
+                "Memory loaded from store", extra={"ctx": {"entries": len(result)}}
             )
             return result
         result = validate_memory_entries(source)
@@ -385,3 +393,282 @@ def run_full_scan(
         },
     )
     return result
+
+
+# ── Pipeline abstraction ──────────────────────────────────────
+
+
+class PipelineContext:
+    """Context passed through scan pipeline stages.
+
+    Attributes:
+        memories: Memory entries being scanned.
+        findings: Accumulated findings.
+        metadata: Scan metadata.
+        scan_id: Unique scan identifier.
+        watermark_key: Optional secret key for watermark verification.
+    """
+
+    def __init__(
+        self,
+        memories: list[dict[str, Any]],
+        scan_id: str,
+        metadata: dict[str, Any] | None = None,
+        watermark_key: str | None = None,
+    ) -> None:
+        self.memories = memories
+        self.findings: list[Finding] = []
+        self.metadata = metadata or {}
+        self.scan_id = scan_id
+        self.watermark_key = watermark_key
+
+
+class ScanStage(ABC):
+    """Abstract scan pipeline stage.
+
+    Subclasses implement :meth:`run` to perform a specific
+    analysis step and add findings to the context.
+    """
+
+    @abstractmethod
+    def run(self, ctx: PipelineContext) -> None:
+        """Execute this pipeline stage.
+
+        Args:
+            ctx: Mutable pipeline context.
+        """
+
+
+class PoisoningStage(ScanStage):
+    """Detect memory poisoning attacks."""
+
+    def run(self, ctx: PipelineContext) -> None:
+        from memmark.poisoning.detector import PoisoningDetector
+
+        detector = PoisoningDetector()
+        findings = detector.detect(ctx.memories)
+        ctx.findings.extend(findings)
+        log.info(
+            "Poisoning stage complete",
+            extra={"ctx": {"findings": len(findings), "scan_id": ctx.scan_id}},
+        )
+
+
+class WatermarkStage(ScanStage):
+    """Detect and verify watermarks."""
+
+    def run(self, ctx: PipelineContext) -> None:
+        if not ctx.watermark_key:
+            log.info(
+                "Watermark stage skipped (no key)",
+                extra={"ctx": {"scan_id": ctx.scan_id}},
+            )
+            return
+        from memmark.watermark.detector import WatermarkDetector
+
+        detector = WatermarkDetector(secret_key=ctx.watermark_key)
+        results = detector.detect(ctx.memories)
+        for r in results:
+            if not r.get("valid", False):
+                ctx.findings.append(
+                    Finding(
+                        finding_type=FindingType.WATERMARK_MISSING,
+                        severity=Severity.MEDIUM,
+                        description=f"Missing watermark: {r.get('reason', 'unknown')}",
+                        memory_id=r.get("memory_id"),
+                        evidence=r,
+                    ),
+                )
+            else:
+                ctx.findings.append(
+                    Finding(
+                        finding_type=FindingType.WATERMARK_DETECTED,
+                        severity=Severity.INFO,
+                        description="Valid watermark detected",
+                        memory_id=r.get("memory_id"),
+                        evidence=r,
+                    ),
+                )
+        log.info(
+            "Watermark stage complete",
+            extra={"ctx": {"scan_id": ctx.scan_id}},
+        )
+
+
+class ForensicsStage(ScanStage):
+    """Run memory forensics and anomaly detection."""
+
+    def run(self, ctx: PipelineContext) -> None:
+        from memmark.integrity.forensics import MemoryForensics
+
+        forensics = MemoryForensics()
+        forensic_results = forensics.analyze(ctx.memories)
+        anomaly_score = forensic_results.get("anomaly_score", 0.0)
+        if anomaly_score > 0.5:
+            ctx.findings.append(
+                Finding(
+                    finding_type=FindingType.ANOMALY_DETECTED,
+                    severity=Severity.MEDIUM if anomaly_score < 0.8 else Severity.HIGH,
+                    description=f"Behavioral anomaly detected (score: {anomaly_score:.2f})",
+                    evidence={"anomaly_score": anomaly_score, **forensic_results},
+                ),
+            )
+        log.info(
+            "Forensics stage complete",
+            extra={"ctx": {"anomaly_score": anomaly_score, "scan_id": ctx.scan_id}},
+        )
+
+
+class ScanPipeline:
+    """Composable scan pipeline.
+
+    Runs a sequence of :class:`ScanStage` stages and
+    produces a :class:`ScanResult`.
+
+    Usage::
+
+        pipeline = ScanPipeline.with_default_stages(watermark_key="my-key")
+        result = pipeline.run(memories, scan_id="scan-001")
+    """
+
+    def __init__(
+        self,
+        stages: list[ScanStage] | None = None,
+        watermark_key: str | None = None,
+    ) -> None:
+        self.stages = stages or []
+        self.watermark_key = watermark_key
+
+    @classmethod
+    def with_default_stages(
+        cls,
+        watermark_key: str | None = None,
+    ) -> ScanPipeline:
+        """Create a pipeline with the standard analysis stages.
+
+        Args:
+            watermark_key: Optional key for watermark detection.
+
+        Returns:
+            Configured ScanPipeline instance.
+        """
+        stages: list[ScanStage] = [
+            PoisoningStage(),
+            ForensicsStage(),
+        ]
+        if watermark_key:
+            stages.insert(1, WatermarkStage())
+        return cls(stages=stages, watermark_key=watermark_key)
+
+    def add_stage(self, stage: ScanStage) -> ScanPipeline:
+        """Append a custom stage to this pipeline.
+
+        Args:
+            stage: ScanStage to append.
+
+        Returns:
+            Self for chaining.
+        """
+        self.stages.append(stage)
+        return self
+
+    def run(
+        self,
+        memories: list[dict[str, Any]],
+        scan_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> ScanResult:
+        """Execute the pipeline and produce a ScanResult.
+
+        Args:
+            memories: Memory entries to scan.
+            scan_id: Optional scan identifier.
+            metadata: Optional metadata.
+
+        Returns:
+            ScanResult with findings from all stages.
+        """
+        import uuid
+
+        scan_id = scan_id or f"scan-{uuid.uuid4().hex[:12]}"
+        ctx = PipelineContext(
+            memories=memories,
+            scan_id=scan_id,
+            metadata=metadata,
+            watermark_key=self.watermark_key,
+        )
+        log.info(
+            "Pipeline started",
+            extra={"ctx": {"scan_id": scan_id, "stages": len(self.stages)}},
+        )
+        for stage in self.stages:
+            stage.run(ctx)
+        memory_hash = hash_memory_state(memories)
+        result = ScanResult(
+            scan_id=scan_id,
+            memory_hash=memory_hash,
+            findings=ctx.findings,
+            metadata=ctx.metadata,
+        )
+        log.info(
+            "Pipeline complete",
+            extra={
+                "ctx": {
+                    "scan_id": scan_id,
+                    "findings": len(result.findings),
+                }
+            },
+        )
+        return result
+
+    async def arun(
+        self,
+        memories: list[dict[str, Any]],
+        scan_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> ScanResult:
+        """Async variant of :meth:`run`.
+
+        Runs each stage via :func:`asyncio.to_thread` for
+        non-blocking execution with large memory stores.
+
+        Args:
+            memories: Memory entries to scan.
+            scan_id: Optional scan identifier.
+            metadata: Optional metadata.
+
+        Returns:
+            ScanResult with findings from all stages.
+        """
+        import asyncio
+
+        scan_id = scan_id or f"scan-{uuid.uuid4().hex[:12]}"
+        ctx = PipelineContext(
+            memories=memories,
+            scan_id=scan_id,
+            metadata=metadata,
+            watermark_key=self.watermark_key,
+        )
+        log.info(
+            "Pipeline started (async)",
+            extra={"ctx": {"scan_id": scan_id, "stages": len(self.stages)}},
+        )
+        for stage in self.stages:
+            await asyncio.to_thread(stage.run, ctx)
+        memory_hash = hash_memory_state(memories)
+        result = ScanResult(
+            scan_id=scan_id,
+            memory_hash=memory_hash,
+            findings=ctx.findings,
+            metadata=ctx.metadata,
+        )
+        log.info(
+            "Pipeline complete (async)",
+            extra={
+                "ctx": {
+                    "scan_id": scan_id,
+                    "findings": len(result.findings),
+                }
+            },
+        )
+        return result

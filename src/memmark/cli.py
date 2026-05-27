@@ -33,7 +33,7 @@ def _version_callback(value: bool) -> None:
         raise typer.Exit()
 
 
-@app.callback()
+@app.callback()  # type: ignore[misc]
 def main(
     version: Annotated[
         bool | None,
@@ -43,7 +43,7 @@ def main(
     """MemMark — AI Agent Memory Integrity Toolkit."""
 
 
-@app.command()
+@app.command()  # type: ignore[misc]
 def scan(
     memory_file: Annotated[
         Path,
@@ -88,7 +88,7 @@ def scan(
         _display_scan_result(result)
 
 
-@app.command()
+@app.command()  # type: ignore[misc]
 def watermark(
     memory_file: Annotated[
         Path,
@@ -149,7 +149,7 @@ def watermark(
         raise typer.Exit(1)
 
 
-@app.command()
+@app.command()  # type: ignore[misc]
 def verify(
     memory_file: Annotated[
         Path,
@@ -186,7 +186,7 @@ def verify(
         raise typer.Exit(1)
 
 
-@app.command()
+@app.command()  # type: ignore[misc]
 def manifest(
     memory_file: Annotated[
         Path,
@@ -214,7 +214,7 @@ def manifest(
     console.print(f"  Entries: {manifest.entry_count}")
 
 
-@app.command()
+@app.command()  # type: ignore[misc]
 def diff(
     memory_before: Annotated[
         Path,
@@ -332,7 +332,7 @@ def _display_diff(diff: MemoryDiff) -> None:
             console.print(f"  - {entry.get('id', 'unknown')}")
 
 
-@app.command()
+@app.command()  # type: ignore[misc]
 def generate_policy(
     memory_file: Annotated[
         Path,
