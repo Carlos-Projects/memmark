@@ -56,3 +56,6 @@ Thumbs.db
 memmark-reports/
 mcpguard-policy.yaml
 opencode.json
+
+# build artifacts
+site/
