@@ -138,7 +138,7 @@ class MCPGuardPolicy:
         if self.metadata:
             config["metadata"] = self.metadata
 
-        return yaml.dump(config, default_flow_style=False, sort_keys=False)  # type: ignore[no-any-return]
+        return str(yaml.dump(config, default_flow_style=False, sort_keys=False))
 
     def save(self, path: str) -> None:
         """Save policy to a YAML file.
