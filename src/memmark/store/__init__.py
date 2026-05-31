@@ -89,3 +89,8 @@ class InMemoryMemoryStore(MemoryStore):
 
     def append(self, entry: dict[str, Any]) -> None:
         self._memories.append(entry)
+
+
+from memmark.store.redis_store import RedisMemoryStore  # noqa: E402
+
+__all__ = ["MemoryStore", "FileMemoryStore", "InMemoryMemoryStore", "RedisMemoryStore"]
